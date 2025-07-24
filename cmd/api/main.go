@@ -6,6 +6,7 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/danigrb.dev/auth-service/internal/database"
 	"github.com/danigrb.dev/auth-service/internal/server"
 )
 
@@ -14,6 +15,9 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
 	}
+
+	// Connect to database BEFORE initializing server
+	database.ConnectDatabase()
 
 	// Initialize Gin router with all routes configured
 	server := server.CreateNewServer()

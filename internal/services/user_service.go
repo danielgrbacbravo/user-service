@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"maps"
 
 	"github.com/danigrb.dev/auth-service/internal/database/interfaces"
 	"github.com/danigrb.dev/auth-service/internal/database/repositories"
@@ -94,7 +95,7 @@ func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
 }
 
 // UpdateUserProfile updates user information
-func (s *UserService) UpdateUserProfile(id uint, updates map[string]interface{}) (*models.User, error) {
+func (s *UserService) UpdateUserProfile(id uint, updates map[string]any) (*models.User, error) {
 	// Get the user first
 	user, err := s.userRepo.FindByID(id)
 	if err != nil {
@@ -139,9 +140,7 @@ func (s *UserService) UpdateUserProfile(id uint, updates map[string]interface{})
 		if user.Preferences == nil {
 			user.Preferences = models.Preferences{}
 		}
-		for k, v := range preferences {
-			user.Preferences[k] = v
-		}
+		maps.Copy(user.Preferences, preferences)
 	}
 
 	// Save the updated user
@@ -177,11 +176,10 @@ func (s *UserService) VerifyUserCredentials(email, password string) (*models.Use
 		return nil, errors.New("invalid credentials")
 	}
 
-	// Verify password (this would use the bcrypt.CompareHashAndPassword method)
-	// Assume User has a VerifyPassword method
-	// if !user.VerifyPassword(password) {
-	//     return nil, errors.New("invalid credentials")
-	// }
+	// Verify password
+	if !user.VerifyPassword(password) {
+		return nil, errors.New("invalid credentials")
+	}
 
 	return user, nil
 }
