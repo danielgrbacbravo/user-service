@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
 	"github.com/danigrb.dev/auth-service/internal/server"
@@ -16,15 +15,8 @@ func main() {
 		log.Println("No .env file found, using environment variables")
 	}
 
-	// Set Gin mode based on ENV
-	mode := os.Getenv("GIN_MODE")
-	if mode == "" {
-		mode = gin.ReleaseMode
-	}
-	gin.SetMode(mode)
-
-	// Initialize Gin router and load routes
-	router := server.SetupRouter()
+	// Initialize Gin router with all routes configured
+	server := server.CreateNewServer()
 
 	// Get port from env or default to 8080
 	port := os.Getenv("PORT")
@@ -33,7 +25,5 @@ func main() {
 	}
 
 	log.Printf("Starting auth-service on port %s", port)
-	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
-	}
+	server.Run()
 }

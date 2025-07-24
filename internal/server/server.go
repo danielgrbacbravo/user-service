@@ -4,18 +4,15 @@ import (
 	"log"
 	"os"
 
-	"github.com/danigrb.dev/auth-service/internal/server/routes"
-
 	"github.com/gin-gonic/gin"
 )
 
-// Server wraps the Gin engine and configuration.
 type Server struct {
 	Engine *gin.Engine
 }
 
-// NewServer initializes the Gin engine, sets up routes, and returns a Server instance.
-func NewServer() *Server {
+// CreateNewServer initializes the Gin engine, sets up routes, and returns a Server instance.
+func CreateNewServer() *Server {
 	// Set Gin mode based on environment
 	mode := os.Getenv("GIN_MODE")
 	if mode == "" {
@@ -26,12 +23,13 @@ func NewServer() *Server {
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.Recovery())
 
-	// Setup routes
-	routes.SetupRoutes(engine)
-
-	return &Server{
+	server := &Server{
 		Engine: engine,
 	}
+
+	server.SetupRouter()
+
+	return server
 }
 
 // Run starts the Gin server on the specified port.
