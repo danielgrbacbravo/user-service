@@ -51,13 +51,14 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 		return
 	}
 	// Generate JWT token
+	secret := []byte(os.Getenv("JWT_SECRET"))
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":  user.ID,
 		"email":    user.Email,
 		"username": user.Username,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
 		"iat":      time.Now().Unix(),                     // Issued at
-	}).SignedString(os.Getenv("JWT_SECRET"))
+	}).SignedString(secret)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -85,13 +86,14 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 	}
 
 	// Generate JWT token
+	secret := []byte(os.Getenv("JWT_SECRET"))
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":  user.ID,
 		"email":    user.Email,
 		"username": user.Username,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
 		"iat":      time.Now().Unix(),                     // Issued at
-	}).SignedString(os.Getenv("JWT_SECRET"))
+	}).SignedString(secret)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -126,6 +128,7 @@ func (ac *AuthController) RefreshToken(ctx *gin.Context) {
 	username, _ := ctx.Get("username")
 
 	// Generate new token with refreshed expiry time
+	secret := []byte(os.Getenv("JWT_SECRET"))
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":  userID,
 		"email":    email,
@@ -134,7 +137,7 @@ func (ac *AuthController) RefreshToken(ctx *gin.Context) {
 		"iat":      time.Now().Unix(),
 	})
 
-	signedToken, err := newToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	signedToken, err := newToken.SignedString(secret)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
@@ -163,8 +166,8 @@ func parseJWTClaims(tokenString string) (jwt.MapClaims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrTokenMalformed
 		}
-		secret := os.Getenv("JWT_SECRET")
-		return []byte(secret), nil
+		secret := []byte(os.Getenv("JWT_SECRET"))
+		return secret, nil
 	})
 
 	if err != nil || !parsedToken.Valid {
@@ -187,7 +190,8 @@ func generateJWTToken(claims jwt.MapClaims) (string, error) {
 		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 		"iat":      time.Now().Unix(),
 	})
-	return newToken.SignedString(os.Getenv("JWT_SECRET"))
+	secret := []byte(os.Getenv("JWT_SECRET"))
+	return newToken.SignedString(secret)
 }
 
 // AppleLoginRequest defines the request body for Apple login
@@ -223,13 +227,14 @@ func (ac *AuthController) AppleLogin(ctx *gin.Context) {
 	}
 
 	// Generate JWT token
+	secret := []byte(os.Getenv("JWT_SECRET"))
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":  user.ID,
 		"email":    user.Email,
 		"username": user.Username,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
 		"iat":      time.Now().Unix(),                     // Issued at
-	}).SignedString([]byte(os.Getenv("JWT_SECRET")))
+	}).SignedString(secret)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
