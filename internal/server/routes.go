@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/danigrb.dev/auth-service/internal/controllers"
+	"github.com/danigrb.dev/auth-service/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,9 +29,8 @@ func (server *Server) SetupRouter() {
 	}
 
 	// User profile routes
-	// TODO: Add JWTAuth middleware when implemented
 	user := router.Group("/user")
-	// user.Use(middleware.JWTAuth())
+	user.Use(middleware.JWTAuth())
 	{
 		user.GET("/profile", userController.GetProfile)
 		user.PUT("/profile", userController.UpdateProfile)

@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 
+	"github.com/danigrb.dev/auth-service/internal/middleware"
 	"github.com/danigrb.dev/auth-service/internal/services"
 	"github.com/gin-gonic/gin"
 )
@@ -22,29 +22,22 @@ func NewUserController() *UserController {
 
 // UpdateProfileRequest defines the request body for profile updates
 type UpdateProfileRequest struct {
-	Email       string                 `json:"email,omitempty"`
-	Username    string                 `json:"username,omitempty"`
-	AvatarURL   string                 `json:"avatar_url,omitempty"`
-	Preferences map[string]interface{} `json:"preferences,omitempty"`
+	Email       string         `json:"email,omitempty"`
+	Username    string         `json:"username,omitempty"`
+	AvatarURL   string         `json:"avatar_url,omitempty"`
+	Preferences map[string]any `json:"preferences,omitempty"`
 }
 
 // GetProfile handles GET /user/profile
 func (uc *UserController) GetProfile(ctx *gin.Context) {
-	// In a real application, you would extract the user ID from the JWT token or session
-	// For this example, we'll continue to use the query parameter approach
-	userIDStr := ctx.Query("user_id")
-	if userIDStr == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "user_id is required"})
+	// Extract user ID from JWT claims using the utility function
+	userID, ok := middleware.ExtractUserID(ctx)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	userID, err := strconv.ParseUint(userIDStr, 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
-		return
-	}
-
-	user, err := uc.userService.GetUserByID(uint(userID))
+	user, err := uc.userService.GetUserByID(userID)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -55,16 +48,10 @@ func (uc *UserController) GetProfile(ctx *gin.Context) {
 
 // UpdateProfile handles PUT /user/profile
 func (uc *UserController) UpdateProfile(ctx *gin.Context) {
-	// In a real application, you would extract the user ID from the JWT token or session
-	userIDStr := ctx.Query("user_id")
-	if userIDStr == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "user_id is required"})
-		return
-	}
-
-	userID, err := strconv.ParseUint(userIDStr, 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+	// Extract user ID from JWT claims using the utility function
+	userID, ok := middleware.ExtractUserID(ctx)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
@@ -75,7 +62,7 @@ func (uc *UserController) UpdateProfile(ctx *gin.Context) {
 	}
 
 	// Convert the request to a map for the service
-	updates := make(map[string]interface{})
+	updates := make(map[string]any)
 	if req.Email != "" {
 		updates["email"] = req.Email
 	}
@@ -89,7 +76,7 @@ func (uc *UserController) UpdateProfile(ctx *gin.Context) {
 		updates["preferences"] = req.Preferences
 	}
 
-	updatedUser, err := uc.userService.UpdateUserProfile(uint(userID), updates)
+	updatedUser, err := uc.userService.UpdateUserProfile(userID, updates)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -100,20 +87,14 @@ func (uc *UserController) UpdateProfile(ctx *gin.Context) {
 
 // DeleteUser handles DELETE /user/profile
 func (uc *UserController) DeleteUser(ctx *gin.Context) {
-	// In a real application, you would extract the user ID from the JWT token or session
-	userIDStr := ctx.Query("user_id")
-	if userIDStr == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "user_id is required"})
+	// Extract user ID from JWT claims using the utility function
+	userID, ok := middleware.ExtractUserID(ctx)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	userID, err := strconv.ParseUint(userIDStr, 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
-		return
-	}
-
-	if err := uc.userService.DeleteUser(uint(userID)); err != nil {
+	if err := uc.userService.DeleteUser(userID); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

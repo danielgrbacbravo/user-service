@@ -1,11 +1,15 @@
 package controllers
 
 import (
-	"log"
+	"fmt"
 	"net/http"
+	"os"
+	"time"
 
+	"github.com/danigrb.dev/auth-service/internal/middleware"
 	"github.com/danigrb.dev/auth-service/internal/services"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // AuthController handles authentication-related routes
@@ -46,9 +50,19 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// Generate JWT token
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id":  user.ID,
+		"email":    user.Email,
+		"username": user.Username,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
+		"iat":      time.Now().Unix(),                     // Issued at
+	}).SignedString(os.Getenv("JWT_SECRET"))
 
-	// Generate JWT token here (will be implemented separately)
-	token := "dummy-token" // Placeholder
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"user":  user,
@@ -70,8 +84,19 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	// Generate JWT token here
-	token := "dummy-token" // Placeholder
+	// Generate JWT token
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id":  user.ID,
+		"email":    user.Email,
+		"username": user.Username,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
+		"iat":      time.Now().Unix(),                     // Issued at
+	}).SignedString(os.Getenv("JWT_SECRET"))
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"user":  user,
@@ -81,24 +106,88 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 
 // RefreshToken handles JWT token refresh
 func (ac *AuthController) RefreshToken(ctx *gin.Context) {
-	// Extract user ID from the token in the Authorization header
-	// This would be handled by middleware in a real implementation
-	token := ctx.GetHeader("Authorization")
-	if token == "" {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
+	// Apply the JWTAuth middleware directly to ensure a valid token
+	middleware.JWTAuth()(ctx)
+
+	// If the middleware aborted the request, return early
+	if ctx.IsAborted() {
 		return
 	}
 
-	// Validate and parse the token
-	// This is just a placeholder - actual implementation would verify the token
-	log.Println("Received token for refresh:", token)
+	// Extract user ID using the utility function
+	userID, ok := middleware.ExtractUserID(ctx)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to extract user ID"})
+		return
+	}
 
-	// Generate a new token
-	newToken := "new-dummy-token" // Placeholder
+	// Extract other user information from context set by middleware
+	email, _ := ctx.Get("email")
+	username, _ := ctx.Get("username")
+
+	// Generate new token with refreshed expiry time
+	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id":  userID,
+		"email":    email,
+		"username": username,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+		"iat":      time.Now().Unix(),
+	})
+
+	signedToken, err := newToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"token": newToken,
+		"token": signedToken,
 	})
+}
+
+// extractBearerToken extracts the JWT token from the Authorization header
+func extractBearerToken(ctx *gin.Context) (string, error) {
+	authHeader := ctx.GetHeader("Authorization")
+	if authHeader == "" {
+		return "", fmt.Errorf("Missing token")
+	}
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		return authHeader[7:], nil
+	}
+	return "", fmt.Errorf("Invalid token format")
+}
+
+// parseJWTClaims parses and validates the JWT token and returns its claims
+func parseJWTClaims(tokenString string) (jwt.MapClaims, error) {
+	parsedToken, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrTokenMalformed
+		}
+		secret := os.Getenv("JWT_SECRET")
+		return []byte(secret), nil
+	})
+
+	if err != nil || !parsedToken.Valid {
+		return nil, fmt.Errorf("Invalid or expired token")
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("Invalid token claims")
+	}
+	return claims, nil
+}
+
+// generateJWTToken creates a new JWT token with updated expiry using the provided claims
+func generateJWTToken(claims jwt.MapClaims) (string, error) {
+	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id":  claims["user_id"],
+		"email":    claims["email"],
+		"username": claims["username"],
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+		"iat":      time.Now().Unix(),
+	})
+	return newToken.SignedString(os.Getenv("JWT_SECRET"))
 }
 
 // AppleLoginRequest defines the request body for Apple login
@@ -134,7 +223,18 @@ func (ac *AuthController) AppleLogin(ctx *gin.Context) {
 	}
 
 	// Generate JWT token
-	token := "apple-dummy-token" // Placeholder
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id":  user.ID,
+		"email":    user.Email,
+		"username": user.Username,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
+		"iat":      time.Now().Unix(),                     // Issued at
+	}).SignedString([]byte(os.Getenv("JWT_SECRET")))
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"user":  user,
