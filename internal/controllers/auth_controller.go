@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/danigrb.dev/auth-service/internal/middleware"
-	"github.com/danigrb.dev/auth-service/internal/services"
+	"github.com/danigrb.dev/user-service/internal/middleware"
+	"github.com/danigrb.dev/user-service/internal/services"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )

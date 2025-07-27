@@ -38,7 +38,7 @@ func (s *Server) Run() {
 	if port == "" {
 		port = "8080"
 	}
-	log.Printf("Starting auth-service on port %s", port)
+	log.Printf("Starting user-service on port %s", port)
 	if err := s.Engine.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"maps"
 
-	"github.com/danigrb.dev/auth-service/internal/database/interfaces"
-	"github.com/danigrb.dev/auth-service/internal/database/repositories"
-	"github.com/danigrb.dev/auth-service/internal/models"
+	"github.com/danigrb.dev/user-service/internal/database/interfaces"
+	"github.com/danigrb.dev/user-service/internal/database/repositories"
+	"github.com/danigrb.dev/user-service/internal/models"
 )
 
 // UserService handles business logic related to users

@@ -6,8 +6,8 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/danigrb.dev/auth-service/internal/database"
-	"github.com/danigrb.dev/auth-service/internal/server"
+	"github.com/danigrb.dev/user-service/internal/database"
+	"github.com/danigrb.dev/user-service/internal/server"
 )
 
 func main() {
@@ -28,6 +28,6 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Starting auth-service on port %s", port)
+	log.Printf("Starting user-service on port %s", port)
 	server.Run()
 }

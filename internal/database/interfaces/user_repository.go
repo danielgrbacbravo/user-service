@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	"github.com/danigrb.dev/auth-service/internal/models"
+	"github.com/danigrb.dev/user-service/internal/models"
 )
 
 // UserRepository defines the interface for user database operations

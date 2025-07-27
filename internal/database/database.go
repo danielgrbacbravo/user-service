@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/danigrb.dev/auth-service/internal/models"
+	"github.com/danigrb.dev/user-service/internal/models"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"

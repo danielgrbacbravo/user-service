@@ -3,7 +3,7 @@ package repositories
 import (
 	"sync"
 
-	"github.com/danigrb.dev/auth-service/internal/database/interfaces"
+	"github.com/danigrb.dev/user-service/internal/database/interfaces"
 )
 
 var (

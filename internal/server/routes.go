@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/danigrb.dev/auth-service/internal/controllers"
-	"github.com/danigrb.dev/auth-service/internal/middleware"
+	"github.com/danigrb.dev/user-service/internal/controllers"
+	"github.com/danigrb.dev/user-service/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 

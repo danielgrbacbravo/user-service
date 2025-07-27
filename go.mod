@@ -1,4 +1,4 @@
-module github.com/danigrb.dev/auth-service
+module github.com/danigrb.dev/user-service
 
 go 1.24.4
 

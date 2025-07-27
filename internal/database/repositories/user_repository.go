@@ -3,9 +3,9 @@ package repositories
 import (
 	"errors"
 
-	"github.com/danigrb.dev/auth-service/internal/database"
-	"github.com/danigrb.dev/auth-service/internal/database/interfaces"
-	"github.com/danigrb.dev/auth-service/internal/models"
+	"github.com/danigrb.dev/user-service/internal/database"
+	"github.com/danigrb.dev/user-service/internal/database/interfaces"
+	"github.com/danigrb.dev/user-service/internal/models"
 	"gorm.io/gorm"
 )
 

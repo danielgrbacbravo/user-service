@@ -3,8 +3,8 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/danigrb.dev/auth-service/internal/middleware"
-	"github.com/danigrb.dev/auth-service/internal/services"
+	"github.com/danigrb.dev/user-service/internal/middleware"
+	"github.com/danigrb.dev/user-service/internal/services"
 	"github.com/gin-gonic/gin"
 )
 
