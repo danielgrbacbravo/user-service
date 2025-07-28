@@ -39,6 +39,7 @@ func (s *Server) Run() {
 		port = "8080"
 	}
 	log.Printf("Starting user-service on port %s", port)
+	//TODO: change to RunTLS, generateCerts, startTLS
 	if err := s.Engine.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
